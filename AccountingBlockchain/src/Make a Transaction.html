@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" type="text/css" href="mystyle.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Hello World</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script>
+  <script language="javascript" type="text/javascript" src="./abi.js"></script>
+
+  <script>
+    const address = "0x3d0A45C4E3aBA87536623c34aa3227a77E347243";
+        window.addEventListener('load', async () => {
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+    });
+    </script>
+    <header>
+        <h1>
+            <div>
+            <span id ="title">Make a Transaction</span>
+            </div>
+        </h1>
+    </header>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="Chart of Accounts.html">Chart of Accounts</a></li>
+        <li><a href="Make a Transaction.html">Make a Transaction</a></li>
+        <li><a href="Inventory Management.html">Inventory Management</a></li>
+    </ul>
+    <hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+</head>
+<body>
+
+    <TABLE>
+        <TR>
+            <TD>Account</TD>
+            <TD>Debit</TD>
+            <TD>Credit</TD>
+        </TR>
+        <TR>
+            <TD>
+                <select style="display: block;" name="accounts1" id="accounts1">
+                    <option value="selectAccount">Select Account</option>
+                </select>
+            </TD>
+            <TD><INPUT TYPE="number" id="firstAccountDr"></TD>
+            <TD><INPUT TYPE="number" id="firstAccountCr"></TD>
+        </TR>
+        <TR>
+            <TD>
+                <select style="display: block;" name="accounts2" id="accounts2">
+                    <option value="selectAccount">Select Account</option>
+                </select>
+            </TD>
+            <TD><INPUT TYPE="number" id="secondAccountDr"></TD>
+            <TD><INPUT TYPE="number" id="secondAccountCr"></TD>
+        </TR>
+      </TABLE>
+      <br>
+      <Button VALUE="Make Transaction" id="MakeTransaction" onclick="makeTransaction()">Make Transaction</Button>
+    </body>
+<script>
+getAlreadyMadeAccounts()
+
+async function makeTransaction()
+{
+    const addresses = await web3.eth.getAccounts();
+    var contract;
+    const contractAddress = address;
+    contract = new web3.eth.Contract(abi, contractAddress);
+    var type1;
+    var type2;
+    var amount1;
+    var amount2;
+    var firstAccountCode;
+    var secondAccountCode;
+    firstAccountCode = await getAccountCode(accounts1.options[accounts1.selectedIndex].value)
+    secondAccountCode = await getAccountCode(accounts2.options[accounts2.selectedIndex].value)
+    if(firstAccountDr.value == "")
+    {
+        type1 = 2;
+        amount1 = firstAccountCr.value;
+        type2 = 1;
+        amount2 = secondAccountDr.value;
+    }
+    else
+    {
+        type1 = 1;
+        amount1 = firstAccountDr.value;
+        type2 = 2;
+        amount2 = secondAccountCr.value;
+    }
+
+        await contract.methods.changeAccountValue(firstAccountCode, amount1, type1).send({
+        from: addresses[0],
+                    
+        });
+
+        await contract.methods.changeAccountValue(secondAccountCode, amount2, type2).send({
+        from: addresses[0],
+        });
+}
+
+async function getAlreadyMadeAccounts()
+{
+    var i;
+    var accounts = await getCodes();
+    for(i=0;i<accounts.length;i++)
+    {
+        var name = await getName(i)
+        let newOption = new Option(name, name)
+        accounts1.add(newOption, undefined);
+        let newOption2 = new Option(name, name)
+        accounts2.add(newOption2, undefined);
+    }
+}
+
+async function getAccountCode(accountName)
+{
+    var i;
+    var accounts = await getCodes();
+    for(i=0;i<accounts.length;i++)
+    {
+        var name = await getName(i);
+        if(name.localeCompare(accountName) == 0)
+        {
+            return i;
+        }
+    }
+}
+
+async function getCodes()
+{
+    var contract;
+    const contractAddress = address;
+    const contractMessage = async () => {
+        contract = new web3.eth.Contract(abi, contractAddress);
+        let codeList = await contract.methods.getAccounts().call();
+        return codeList;
+      }
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+          var codes = await contractMessage();
+          return codes;
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+}
+
+async function getName(code)
+{
+    var contract;
+    const contractAddress = address;
+    const contractMessage = async () => {
+        contract = new web3.eth.Contract(abi, contractAddress);
+        let bName = await contract.methods.getAccountName(code).call();
+        return bName;
+      }
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+          var name = await contractMessage();
+          return name;
+        } catch (error) {
+            return "error";
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+}
+</script>
+</html>

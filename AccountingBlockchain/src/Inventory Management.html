@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" type="text/css" href="mystyle.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Hello World</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script>
+  <script language="javascript" type="text/javascript" src="./abi.js"></script>
+
+  <script>
+    const address = "0x3d0A45C4E3aBA87536623c34aa3227a77E347243";
+        window.addEventListener('load', async () => {
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+    });
+    </script>
+    <header>
+        <h1>
+            <div>
+            <span id ="title">Inventory Management</span>
+            </div>
+        </h1>
+    </header>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="Chart of Accounts.html">Chart of Accounts</a></li>
+        <li><a href="Make a Transaction.html">Make a Transaction</a></li>
+        <li><a href="Inventory Management.html">Inventory Management</a></li>
+    </ul>
+    <hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+</head>
+<body>
+    <button id="AddNewItem" >Add New Item</button>
+    <button id="ModifyItem" >Modify Item</button>
+    <button id="RemoveItem" >Remove Item</button>
+    <br>
+    <br>
+    <table style="width:100%; margin: 0%; padding: 0%;" id="table">
+        <tr id ="titleRow">
+            <td> <b>Item Name</b></td>
+            <td> <b>Item Number</b></td>
+            <td> <b>Quantity</b></td>
+            <td> <b>Sales Price</b> </td>
+            <td> <b>Purchase Price</b> </td>
+            <td> <b>Total value</b> </td>
+        </tr>
+    </table>
+</body>
+<div id="addInventoryModal" class="modal">
+    <div class = "modal-content">
+        <span class="close">&times;</span>
+        <h2>
+            <div>
+                <span id="modalTitle">Add New Inventory Item</span>
+            </div>
+            <hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+                <div class="field" id="Account Type">
+
+                    <label style="font-size: medium;" for="iname">Inventory Name:</label><br>
+                    <input type="text" id="iname" name="iname"><br>
+
+                    <label style="font-size: medium;">Inventory Number:</label><br>
+                    <input type="number" id="iNumber" name="inumber"><br>
+
+                    <label style="font-size: medium;" for="iquantity">Inventory Quantity:</label><br>
+                    <input type="number" id="iquantity" name="iquantity"><br>
+
+                    <label style="font-size: medium;" for="isprice">Sales Price:</label><br>
+                    <input type="number" id="isprice" name="isprice"><br>
+
+                    <label style="font-size: medium;" for="ipprice">Purchase Price:</label><br>
+                    <input type="number" id="ipprice" name="ipprice"><br><br>
+
+                    <button id="storeInventory" onclick="storeInventory()">Create Inventory Item</button>
+                </div>      
+        </h2>
+    </div>
+</div>
+
+<div id="modifyInventoryModal" class="modal">
+    <div class = "modal-content">
+        <span class="close">&times;</span>
+        <h2>
+            <div>
+                <span id="modifyModalTitle">Modify Inventory Item</span>
+            </div>
+            <hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+                <div class="field" id="Account Type">
+                    <select style="display: block;" name="inventoryItems" id="inventoryItems" onchange="getSelectedItem(this)">
+                        <option value="selectItem">Select Item</option>
+                    </select>
+
+                    <label style="font-size: medium;" for="icquantity">Inventory Quantity:</label><br>
+                    <input type="number" id="icquantity" name="icquantity"><br>
+
+                    <label style="font-size: medium;" for="icsprice">Sales Price:</label><br>
+                    <input type="number" id="icsprice" name="icsprice"><br>
+
+                    <label style="font-size: medium;" for="icpprice">Purchase Price:</label><br>
+                    <input type="number" id="icpprice" name="icpprice"><br><br>
+
+                    <button id="modifyInventory" onclick="modifyInventory()">Modify Inventory Item</button>
+                </div>      
+        </h2>
+    </div>
+</div>
+
+<script>
+async function modifyInventory()
+{
+    const addresses = await web3.eth.getAccounts();
+    var contract;
+    const contractAddress = address;
+    contract = new web3.eth.Contract(abi, contractAddress);
+
+    var code = await getInventoryCode(document.getElementById("inventoryItems").options[inventoryItems.selectedIndex].value)
+    console.log(code);
+    var newQuantity = document.getElementById("icquantity").value;
+    var newSalesPrice = document.getElementById("icsprice").value;
+    var newPurchasePrice = document.getElementById("icpprice").value;
+
+    await contract.methods.updateInventory(code, newQuantity, newSalesPrice, newPurchasePrice).send({
+    from: addresses[0],
+    });
+
+    document.getElementById("inventoryItems").selectedIndex = 0;
+    document.getElementById("icquantity").value = "";
+    document.getElementById("icsprice").value = "";
+    document.getElementById("icpprice").value = "";
+    modal2.style.display = "none";
+    location.reload();
+}
+
+async function getInventoryCode(accountName)
+{
+    var i;
+    var accounts = await getCodes();
+    for(i=0;i<accounts.length;i++)
+    {
+        var name = await getName(i);
+        if(name.localeCompare(accountName) == 0)
+        {
+            return i;
+        }
+    }
+}
+
+async function getSelectedItem(selectedObject)
+{
+    var selected = selectedObject.options[selectedObject.selectedIndex].value;
+    
+    var i;
+    var index;
+    var inventories2 = await getCodes();
+    for(i=0;i<inventories2.length;i++)
+    {
+        var name = await getName(i);
+        if(name.localeCompare(selected) == 0)
+        {
+            index = i;
+            break;
+        }
+    }
+    var currentQuantity = await getQuantity(i);
+    var currentSPrice = await getSalesPrices(i);
+    var currentPPrice = await getPurchasePrices(i);
+
+    document.getElementById("icquantity").value = currentQuantity;
+    document.getElementById("icsprice").value = currentSPrice;
+    document.getElementById("icpprice").value = currentPPrice;
+}
+
+getAlreadyMadeAccounts();
+getAlreadyMadeInventory();
+async function getAlreadyMadeAccounts()
+{
+    var i;
+    var inventories = await getCodes();
+    for(i = 0; i<inventories.length;i++)
+    {
+        addRow(i);
+    }
+}
+
+async function getAlreadyMadeInventory()
+{
+    var i;
+    var accounts = await getCodes();
+    for(i=0;i<accounts.length;i++)
+    {
+        var name = await getName(i)
+        let newOption = new Option(name, name)
+        inventoryItems.add(newOption, undefined);
+    }
+}
+var modal = document.getElementById("addInventoryModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("AddNewItem");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+    modal.style.display = "block";
+}
+
+var modal2 = document.getElementById("modifyInventoryModal");
+
+// Get the button that opens the modal
+var btn2 = document.getElementById("ModifyItem");
+
+var span2 = document.getElementsByClassName("close")[1];
+// When the user clicks on the button, open the modal
+btn2.onclick = function() {
+    modal2.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+    iname.value = "";
+    iNumber.value = "";
+    iquantity.value = "";
+    isprice.value = "";
+    ipprice.value = "";
+    modal.style.display = "none";
+}
+
+span2.onclick = function() {
+    modal2.style.display = "none";
+    document.getElementById("inventoryItems").selectedIndex = 0;
+    document.getElementById("icquantity").value = "";
+    document.getElementById("icsprice").value = "";
+    document.getElementById("icpprice").value = "";
+}
+
+    async function getCodes()
+    {
+        var contract;
+        const contractAddress = address;
+        const contractMessage = async () => {
+            contract = new web3.eth.Contract(abi, contractAddress);
+            let codeList = await contract.methods.getInventories().call();
+            return codeList;
+        }
+    
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            try {
+            // Request account access if needed
+            await ethereum.enable();
+            var codes = await contractMessage();
+            return codes;
+            } catch (error) {
+            // User denied account access...
+            }
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        }
+    }
+
+    //a script to store the new account
+    async function storeInventory()
+    {
+        const addresses = await web3.eth.getAccounts();
+        var contract;
+        const contractAddress = address;
+        contract = new web3.eth.Contract(abi, contractAddress);
+        var inventoryName = document.getElementById("iname").value;
+        var inventoryNumber = document.getElementById("iNumber").value;
+        var inventoryQuantity = document.getElementById("iquantity").value;
+        var salesPrice = document.getElementById("isprice").value;
+        var purchasePrice = document.getElementById("ipprice").value;
+        if(inventoryName == "" || inventoryNumber =="" || inventoryQuantity == "" || salesPrice == "" || purchasePrice == "")
+        {
+            alert("Please put a value in each section");
+        }
+        else
+        {
+
+                await contract.methods.registerInventory(inventoryName, inventoryQuantity, inventoryNumber, salesPrice, purchasePrice).send({
+                from: addresses[0],
+                
+                });
+                addRow(inventoryNumber);
+
+                console.log("User rejected payment");
+            
+            iname.value = "";
+            iNumber.value = "";
+            iquantity.value = "";
+            isprice.value = "";
+            ipprice.value = "";
+            modal.style.display = "none";
+
+           
+        }
+    }
+
+    async function addRow(code){
+        var table = document.getElementById("table");
+        var row= document.createElement("tr");
+        var td1 = document.createElement("td");
+        var td2 = document.createElement("td");
+        var td3 = document.createElement("td");
+        var td4 = document.createElement("td");
+        var td5 = document.createElement("td");
+        var td6 = document.createElement("td");
+
+        td1.innerHTML = await getName(code)
+        td2.innerHTML = code;
+        td3.innerHTML = await getQuantity(code);
+        td4.innerHTML = "$" + await getSalesPrices(code);
+        td5.innerHTML = "$" + await getPurchasePrices(code);
+        var purchPrice = await getPurchasePrices(code);
+        var quantity = await getQuantity(code);
+        td6.innerHTML = "$" + purchPrice * quantity;
+
+        row.appendChild(td1);
+        row.appendChild(td2);
+        row.appendChild(td3);
+        row.appendChild(td4);
+        row.appendChild(td5);
+        row.appendChild(td6);
+
+        table.children[0].appendChild(row);
+    }
+
+    async function getName(code)
+    {
+        var contract;
+        const contractAddress = address;
+        const contractMessage = async () => {
+            contract = new web3.eth.Contract(abi, contractAddress);
+            let bName = await contract.methods.getInventoryName(code).call();
+            return bName;
+        }
+    
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            try {
+            // Request account access if needed
+            await ethereum.enable();
+            var name = await contractMessage();
+            return name;
+            } catch (error) {
+                return "error";
+            // User denied account access...
+            }
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        }
+    }
+
+    async function getQuantity(code)
+    {
+        var contract;
+        const contractAddress = address;
+        const contractMessage = async () => {
+            contract = new web3.eth.Contract(abi, contractAddress);
+            let iquantity = await contract.methods.getInventoryQuantity(code).call();
+            return iquantity;
+        }
+    
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            try {
+            // Request account access if needed
+            await ethereum.enable();
+            var quantity = await contractMessage();
+            return quantity;
+            } catch (error) {
+                return "error";
+            // User denied account access...
+            }
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        }
+    }
+
+    async function getSalesPrices(code)
+    {
+        var contract;
+        const contractAddress = address;
+        const contractMessage = async () => {
+            contract = new web3.eth.Contract(abi, contractAddress);
+            let isPrice = await contract.methods.getSalesPrice(code).call();
+            return isPrice;
+        }
+    
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            try {
+            // Request account access if needed
+            await ethereum.enable();
+            var sPrice = await contractMessage();
+            return sPrice;
+            } catch (error) {
+                return "error";
+            // User denied account access...
+            }
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        }
+    }
+
+    async function getPurchasePrices(code)
+    {
+        var contract;
+        const contractAddress = address;
+        const contractMessage = async () => {
+            contract = new web3.eth.Contract(abi, contractAddress);
+            let ipPrice = await contract.methods.getPurchasePrice(code).call();
+            return ipPrice;
+        }
+    
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            try {
+            // Request account access if needed
+            await ethereum.enable();
+            var pPrice = await contractMessage();
+            return pPrice;
+            } catch (error) {
+                return "error";
+            // User denied account access...
+            }
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        }
+    }
+</script>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" type="text/css" href="mystyle.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Hello World</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script>
+  <script language="javascript" type="text/javascript" src="./abi.js"></script>
+
+  <script>
+    const address = "0x3d0A45C4E3aBA87536623c34aa3227a77E347243";
+        window.addEventListener('load', async () => {
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+    });
+    </script>
+    <header>
+      <h1>
+          <div>
+          <span id ="title">Accounting for Blockchain</span>
+          </div>
+      </h1>
+  </header>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="Chart of Accounts.html">Chart of Accounts</a></li>
+    <li><a href="Make a Transaction.html">Make a Transaction</a></li>
+    <li><a href="Inventory Management.html">Inventory Management</a></li>
+</ul>
+<hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+
+</head>
+<body>
+
+</body>
+</div>
+</html>

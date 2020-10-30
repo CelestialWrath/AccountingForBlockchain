@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="mystyle.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Hello World</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script>
+    <script language="javascript" type="text/javascript" src="./abi.js"></script>
+
+    <script>
+        const address = "0x3d0A45C4E3aBA87536623c34aa3227a77E347243";
+        window.addEventListener('load', async () => {
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+    });
+    </script>
+    <script>
+        //a script to store the new account
+        async function storeAccount()
+        {
+            const addresses = await web3.eth.getAccounts();
+            var contract;
+            const contractAddress = address;
+            contract = new web3.eth.Contract(abi, contractAddress);
+            var accountName = document.getElementById("aname").value;
+            var accountCode = document.getElementById("code").value;
+            var accountDescription = document.getElementById("adescription").value;
+            var accountType = document.getElementById("accounts");
+            var selectedValue = accountType.options[accountType.selectedIndex].value;
+            
+            if(accountCode == "" || accountName =="" || accountType == "Select Type" ||selectedValue == "selectType")
+            {
+                alert("Please put a value in each section");
+            }
+            else
+            {
+                try
+                {
+                    var accountTypeCode;
+                    if(selectedValue == "Asset" || selectedValue=="Expense")
+                    {
+                        accountTypeCode = 1;
+                    }
+                    else
+                    {
+                        accountTypeCode = 2;
+                    }
+                    await contract.methods.registerAccount(selectedValue, accountName, accountCode, accountDescription, accountTypeCode).send({
+                    from: addresses[0],
+                    
+                    });
+                    addRow(document.getElementById("code").value);
+                }
+                catch
+                {
+                    console.log("User rejected payment");
+                }
+                aname.value = "";
+                accounts.selectedIndex = 0;
+                code.value = "";
+                adescription.value = "";
+                modal.style.display = "none";
+
+               
+            }
+        }
+    </script>
+
+    <header>
+        <h1>
+            <div>
+            <span id ="title">Chart of Accounts</span>
+            </div>
+        </h1>
+    </header>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="Chart of Accounts.html">Chart of Accounts</a></li>
+        <li><a href="Make a Transaction.html">Make a Transaction</a></li>
+        <li><a href="Inventory Management.html">Inventory Management</a></li>
+    </ul>
+    <hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+    
+</head>
+<body>
+    <div style="padding-left: 5% ">
+    <button type="button" id="createAccount" onclick="createAccount()">Create Account</button>
+    <button type="button" id="deleteAccount" onclick="deleteAccount()">Delete Account</button>
+    </div>
+</body>
+<br>
+<div style="margin: 0%; padding: 0%;">
+<table style="width:100%; margin: 0%; padding: 0%;" id="table">
+    <tr id ="titleRow">
+        <td> <input type="checkbox" id="chk_all"  /></td>
+        <td> <b>Code</b></td>
+        <td> <b>Name</b></td>
+        <td> <b>Type</b> </td>
+        <td> <b>Amount</b> </td>
+    </tr>
+</table>
+<div>
+<div id="createAccountModal" class="modal">
+    <div class = "modal-content">
+        <span class="close">&times;</span>
+        <h2>
+            <div>
+                <span id="modalTitle">Add New Account</span>
+            </div>
+            <hr style="border: 1px solid gray; opacity: 50%; padding-left: 10%;" />
+                <div class="field" id="Account Type">
+
+                    <label style="font-size: medium;" for="aname">Account Name:</label><br>
+                    <input type="text" id="aname" name="aname"><br>
+
+                    <label style="font-size: medium;">Account Type</label>
+                    <select style="display: block;" name="accounts" id="accounts">
+                        <option value="selectType">Select Type</option>
+                        <option value="Asset">Asset</option>
+                        <option value="Expense">Expense</option>
+                        <option value="Liability">Liability</option>
+                        <option value="Income">Income</option>
+                        <option value="Equity">Equity</option>
+                    </select>
+
+                    <label style="font-size: medium;" for="code">Account Code:</label><br>
+                    <input type="number" id="code" name="code"><br>
+
+                    <label style="font-size: medium;" for="adescription">Account Description:</label><br>
+                    <input type="text" id="adescription" name="adescription"><br><br>
+
+                    <button id="storeAccount" onclick="storeAccount()">Create Account</button>
+                </div>      
+        </h2>
+    </div>
+</div>
+
+<script>
+    // Get the modal
+var modal = document.getElementById("createAccountModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("createAccount");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+    aname.value = "";
+    accounts.selectedIndex = 0;
+    code.value = "";
+    adescription.value = "";
+    modal.style.display = "none";
+}
+
+getAlreadyMadeAccounts();
+
+async function getAlreadyMadeAccounts()
+{
+    var i;
+    var accounts = await getCodes();
+    for(i = 0; i<accounts.length;i++)
+    {
+        addRow(i);
+    }
+}
+
+    async function addRow(code){
+        var table = document.getElementById("table");
+        var row= document.createElement("tr");
+        var td1 = document.createElement("td");
+        var td2 = document.createElement("td");
+        var td3 = document.createElement("td");
+        var td4 = document.createElement("td");
+        var td5 = document.createElement("td");
+
+        td1.innerHTML = "<input type='checkbox'/>";
+        td2.innerHTML  = code;
+        td3.innerHTML  = await getName(code);
+        td4.innerHTML  = await getType(code);
+        td5.innerHTML  = "$" + await getAmount(code);
+
+        row.appendChild(td1);
+        row.appendChild(td2);
+        row.appendChild(td3);
+        row.appendChild(td4);
+        row.appendChild(td5);
+
+        table.children[0].appendChild(row);
+    }
+
+async function getName(code)
+{
+    var contract;
+    const contractAddress = address;
+    const contractMessage = async () => {
+        contract = new web3.eth.Contract(abi, contractAddress);
+        let bName = await contract.methods.getAccountName(code).call();
+        return bName;
+      }
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+          var name = await contractMessage();
+          return name;
+        } catch (error) {
+            return "error";
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+}
+
+async function getType(code)
+{
+    var contract;
+    const contractAddress = address;
+    const contractMessage = async () => {
+        contract = new web3.eth.Contract(abi, contractAddress);
+        let bType = await contract.methods.getAccountType(code).call();
+        return bType;
+      }
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+          var type = await contractMessage();
+          return type;
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+}
+
+async function getAmount(code)
+{
+    var contract;
+    const contractAddress = address;
+    const contractMessage = async () => {
+        contract = new web3.eth.Contract(abi, contractAddress);
+        let bAmount = await contract.methods.getAccountValue(code).call();
+        return bAmount;
+      }
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+          var amount = await contractMessage();
+          return amount;
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+}
+
+async function getCodes()
+{
+    var contract;
+    const contractAddress = address;
+    const contractMessage = async () => {
+        contract = new web3.eth.Contract(abi, contractAddress);
+        let codeList = await contract.methods.getAccounts().call();
+        return codeList;
+      }
+  
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          // Request account access if needed
+          await ethereum.enable();
+          var codes = await contractMessage();
+          return codes;
+        } catch (error) {
+          // User denied account access...
+        }
+      }
+      // Non-dapp browsers...
+      else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+      }
+}
+</script>
+</html>
